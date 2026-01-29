@@ -42,7 +42,7 @@ class FileHandler
         }
 
         //Destructor (Release)
-        ~FileHandler()
+        ~FileHandler() noexcept
         {
             close();
         }
