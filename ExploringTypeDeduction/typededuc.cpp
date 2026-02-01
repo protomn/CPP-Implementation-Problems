@@ -15,6 +15,7 @@ Constraints:
 
 #include <iostream>
 #include <string>
+#include <utility>
 
 void myFunc() { }
 
@@ -50,6 +51,31 @@ auto &getRefer() { return glob_x; }
 
 //decltype(auto) -> returns exactly what glob_x is
 decltype(auto) getExact() { return glob_x; }
+
+/*
+auto deduced return type with initializer_list
+*/
+auto foo()
+{
+    //return {1, 2, 3}; -> ERROR: cannot deduce initializer_list in function return
+    /*
+    Why?
+    Because braced-init-lists have no type, hence auto cannot deduce a type for the return statement
+
+    auto x = {1, 2, 3}; -> This is OK because {1, 2, 3} is treated as an initializer_list initializer
+    the compiler can deduce the type to be std::initializer_list<int>
+
+    but when a function has an auto return type
+    there is nothing for {1, 2, 3} to bind to
+    there is no variable being directly initialized, it's just a return statement
+
+    the compiler cannot decide
+        - are we initializing a std::initializer_list<>
+        - are we creating an array
+        - are we constructing a temporary aggregate object
+    there is no target type to guide the deduction
+    */
+}
 
 int main()
 {
@@ -214,6 +240,75 @@ int main()
     template <typename T> void foo (T val) { ... }
     All of the standard auto deduction rules apply to T
     */
+
+    //Some edge cases
+    /*
+    volatile - when it's dropped and when it isn't
+    */
+    volatile int vi = 5;
+    auto vi_1 = vi; // deduces to int, volatile is dropped
+    auto &vi_2 = vi; // deduces to volatile int& (volatile not dropped when identifier is an auto ref)
+
+    INSPECT(vi_1);
+    INSPECT(vi_2);
+    std::cout << '\n';
+
+    /*
+    auto with r-value reference to const
+    */
+    const int &&pp = 10;
+    auto ded = pp; // deduces to int (const and r-value reference dropped)
+    auto &&dedd = pp; // deduces to const int &&
+
+    INSPECT(ded);
+    INSPECT(dedd);
+    std::cout << '\n';
+
+    /*
+    C++17 -> auto with structured bindings
+    */
+    std::pair<int, const char *> p{1, "hi"};
+
+    auto [a, b] = p; // a: int, b: const char * (copies)
+    auto &[cc, dd] = p; // cc: int, dd: const char * (references)
+    auto &&[ee, ff] = p; // Forwarding references
+
+    INSPECT(cc);
+    INSPECT(dd);
+    INSPECT(ee);
+    INSPECT(ff);
+    std::cout << '\n';
+
+    /*
+    auto template argument deduction for lambdas
+    */
+    auto lambda1 = [](auto x){ return x + 1; };
+
+    INSPECT(lambda1(5));
+    INSPECT(lambda1(3.14));
+    std::cout << '\n';
+
+    auto g_lambda = lambda1; // auto lambdas are copyable
+
+    INSPECT(g_lambda);
+    std::cout << '\n';
+
+    /*
+    Templated lambdas have not been covered
+    */
+
+    /*
+    Bonus weird case [decltype(auto) with assignment operator]
+    */
+
+    int aaa = 1, bbb = 2;
+
+    decltype(auto) ww = (aaa + bbb); // deduces to int;
+    decltype(auto) xx = (aaa = bbb); // deduces to int& -> assignment returns lvalue reference
+
+    INSPECT(ww);
+    INSPECT(xx);
+    std::cout << '\n';
 
     return 0;
 }
