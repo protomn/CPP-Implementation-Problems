@@ -16,6 +16,8 @@ Constraints:
 #include <iostream>
 #include <string>
 
+void myFunc() { }
+
 template <typename T>
 void printType(const std::string &name)
 {
@@ -34,6 +36,20 @@ void printType(const std::string &name)
 
 const int globalVal = 100;
 const int &getRef() { return globalVal; }
+
+/*
+auto as a function return type
+*/
+int glob_x = 10;
+
+// Standard auto return (returns a copy of glob_x)
+auto getVal() { return glob_x; }
+
+//auto & -> return a reference
+auto &getRefer() { return glob_x; }
+
+//decltype(auto) -> returns exactly what glob_x is
+decltype(auto) getExact() { return glob_x; }
 
 int main()
 {
@@ -143,6 +159,61 @@ int main()
     INSPECT(d3);
 
     std::cout << '\n';
+
+    /*
+    Function decay
+    */
+    auto f1 = myFunc; // decays to void(*)() -> function pointer
+    auto &f2 = myFunc; // becomes void(&)() -> reference to function
+
+    INSPECT(f1);
+    INSPECT(f2);
+    std::cout << '\n';
+
+    /*
+    decltype(auto) parantheses
+    */
+
+    decltype(auto) e1 = x; // deduces to int
+    decltype(auto) e2 = (x); // deduces to int &
+
+    /*
+    Why?
+    x is the variable name (identifier)
+    (x) is an expression that evaluates to an l-value
+    decltype differentiates between identifiers and l-values expressions
+    */
+
+    INSPECT(e1);
+    INSPECT(e2);
+    std::cout << '\n';
+
+    /*
+    Multi-variable definition
+    */
+    auto u = 1, v = 2; //OK, both are ints
+    //auto l = 1, m = 3.1415; //throws an ERROR, inconsistent type deduction for auto
+
+    /*
+    Comma operator trick
+    */
+    auto m1 = (1, 2.5);
+    /*
+    Left operand of the comma operator has no effect.
+    Evaluates to return double
+    */
+    INSPECT(m1);
+    std::cout << '\n';
+
+    /*
+    C++20 (Abreviated Templates)
+    */
+    /*
+    void foo(auto val) { ... }
+    This is valid in C++20, it's a literal shorthand for
+    template <typename T> void foo (T val) { ... }
+    All of the standard auto deduction rules apply to T
+    */
 
     return 0;
 }
