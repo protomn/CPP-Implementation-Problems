@@ -77,10 +77,12 @@ class Buffer
         //Helper function to modify data
         void set(int index, int value)
         {
-            if(index < size_)
+            if (index < 0 || static_cast<size_t>(index) >= size_)
             {
-                data_[index] = value;
+                return;
             }
+
+            data_[index] = value;
         }
 
         void print(const std::string &name) const
